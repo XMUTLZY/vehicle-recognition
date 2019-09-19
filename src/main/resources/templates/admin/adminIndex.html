@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>车辆识别在线服务平台</title>
+    <link rel="stylesheet" href="/layui/css/layui.css">
+    <script src="/js/2.0.0/jquery.min.js"></script>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">车辆识别在线服务平台</div>
+        <!-- 头部区域（可配合layui已有的水平导航） -->
+        <ul class="layui-nav layui-layout-left">
+            <li class="layui-nav-item"><a href="">控制台</a></li>
+            <li class="layui-nav-item"><a href="">产品管理</a></li>
+            <li class="layui-nav-item"><a href="">运营管理</a></li>
+            <li class="layui-nav-item">
+                <a href="javascript:;">其它系统</a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">邮件管理</a></dd>
+                    <dd><a href="">消息管理</a></dd>
+                    <dd><a href="">授权管理</a></dd>
+                </dl>
+            </li>
+        </ul>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item">
+                <!--<img th:src="${admin.portrait}" style="width: 30px;height: 30px;">-->
+                <a th:text="${admin.userName}"></a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">个人中心</a></dd>
+                    <dd><a href="">安全设置</a></dd>
+                    <dd><a href="/adminView/login">退出登录</a></dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <li class="layui-nav-item layui-this"><a onclick="adminIndexJs.event.getData();">数据爬取</a></li>
+                <li class="layui-nav-item"><a onclick="adminIndexJs.event.dataSourceSign();">数据源标记</a></li>
+                <li class="layui-nav-item"><a onclick="adminIndexJs.event.classify();">分类</a></li>
+                <li class="layui-nav-item"><a onclick="adminIndexJs.event.mathTest();">算法测试</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <!-- 数据爬取列表 -->
+        <div class="layui-hide" style="width:600px;position:relative;top:20%;left:30%;" id="get-data">
+            <div class="layui-form">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">时间：</label>
+                    <div class="layui-inline">
+                        <input class="layui-input" id="data-time" placeholder="爬取的数据时间" autocomplete="off">
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">数据源：</label>
+                    <div class="layui-input-block">
+                        <textarea class="layui-textarea" id="data-source" autocomplete="off" disabled>http://image.baidu.com
+                        </textarea>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-col-md6">
+                        <div shiro:hasPermission="启动爬取" class="layui-inline">
+                            <button class="layui-btn" onclick="adminIndexJs.method.startRun();">
+                                <i class="layui-icon">&#xe608;</i> 启动
+                            </button>
+                        </div>
+                    </div>
+                    <div class="layui-col-md6">
+                        <div shiro:hasPermission="重置爬取" class="layui-inline">
+                            <button class="layui-btn layui-btn-primary" onclick="adminIndexJs.method.recover();">
+                                <i class="layui-icon">&#xe608;</i> 重置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 数据源标记 -->
+        <div class="layui-hide" style="padding: 15px;" id="data-source-sign">
+            <button type="button" class="layui-btn left-btn1" id="image-upload-tag">
+                <i class="layui-icon">&#xe67c;</i>点击上传您需要标注的图片
+            </button>
+            <table id="data-source-sign-table" lay-filter="data-source-sign-filter"></table>
+            <script type="text/html" id="data-source-sign-tool">
+                <div shiro:hasPermission="数据标注" class="layui-inline">
+                    <input type="checkbox" name="isSign" value="{{d.id}}" lay-skin="switch" lay-text="有车|无车"
+                           lay-filter="switch-car" {{ d.isSign== 1 ? 'checked' : '' }}>
+                </div>
+            </script>
+        </div>
+        <!-- 分类 -->
+        <div class="layui-hide" style="padding: 15px;" id="classify">
+            <div style="text-align: center;">
+                <div class="layui-row">
+                    <div class="layui-col-md9">
+                        <button type="button" class="layui-btn left-btn1" id="image-upload-classify">
+                            <i class="layui-icon">&#xe67c;</i>点击上传您需要分类的图片
+                        </button>
+                    </div>
+                    <div class="layui-col-md9">
+                        <div class="layui-upload-drag">
+                            <i class="layui-icon"></i>
+                            <p>点击上传，或将文件拖拽到此处</p>
+                            <img class="layui-icon" style="width: 400px; height: 400px;"
+                                 id="image-upload-classify-img">
+                        </div>
+                    </div>
+                    <div class="layui-col-md1">
+                        <button class="layui-btn layui-btn-normal layui-inline"
+                                onclick="adminIndexJs.method.startClassify();">
+                            <i class="layui-icon">&#xe608;</i> 开始分类
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 算法测试 -->
+        <div class="layui-hide" style="padding: 15px;" id="math-test">
+            <div class="layui-row layui-col-space22">
+                <div class="layui-col-md4 layui-col-md-offset2">
+                    <button type="button" class="layui-btn left-btn1" id="image-upload-test">
+                        <i class="layui-icon">&#xe67c;</i>点击上传您需要分类的图片
+                    </button>
+                </div>
+                <div class="layui-col-md4 layui-col-md-offset2">
+                    <button class="layui-btn layui-btn-normal layui-inline"
+                            onclick="adminIndexJs.method.startTest();">
+                        <i class="layui-icon">&#xe608;</i> 开始测试
+                    </button>
+                </div>
+            </div>
+            <div class="layui-row layui-col-space22">
+                <div class="layui-col-md6">
+                    <div style="text-align: center;">
+                        <div class="layui-upload-drag">
+                            <i class="layui-icon"></i>
+                            <p>点击上传，或将文件拖拽到此处</p>
+                            <img class="layui-icon" style="width: 400px; height: 350px;"
+                                 id="image-upload-test-img">
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md6">
+                    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+                        <legend>本站算法</legend>
+                    </fieldset>
+                    <div style="text-align: center;">
+                        <input class="layui-elem-quote layui-quote-nm" id="image-test-current" style="width: 230px;">
+                    </div>
+                </div>
+                <div class="layui-col-md6">
+                    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+                        <legend>CNN</legend>
+                    </fieldset>
+                    <div style="text-align: center;">
+                        <input class="layui-elem-quote layui-quote-nm" id="image-test-1" style="width: 230px;">
+                    </div>
+                </div>
+                <div class="layui-col-md6">
+                    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+                        <legend>SVM</legend>
+                    </fieldset>
+                    <div style="text-align: center;">
+                        <input class="layui-elem-quote layui-quote-nm" id="image-test-2" style="width: 230px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © 车辆识别在线服务平台
+    </div>
+</div>
+
+<script src="/layui/layui.all.js"></script>
+<script type="text/javascript" src="/js/admin/adminIndexJs.js"></script>
+</body>
+</html>
